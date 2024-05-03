@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e05bf5a6-5831-4099-b5df-88ea2286fce6" basePath="emp-sapi" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="72b8604e-7264-4a18-b2b2-e47695f7905c" >
+		<db:my-sql-connection host="172.22.0.2" port="3306" user="ghani" password="ghani" database="mule"/>
+	</db:config>
+	<flow name="create-employeeFlow1" doc:id="de114b56-84d9-4131-9e4e-7e1d8aec3090" >
+		<logger level="INFO" doc:name="Logger" doc:id="53e53bc5-f7af-4122-929d-529ee2cc24c3" />
+	</flow>
+	<flow name="create-employeeFlow" doc:id="358427c6-7b8f-449c-8c47-d4bcdb71e18a" >
+		<http:listener doc:name="Create Emp Listener" doc:id="7bac2b04-1173-484d-9f31-ffeadca5ded8" config-ref="HTTP_Listener_config" path="create-employee" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="Logger" doc:id="feee7d55-e00c-4790-a454-2de3a4d24249" message="started"/>
+		<db:insert doc:name="Insert" doc:id="7bbd9082-d51c-419b-ad8e-0fe010aa25b7" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into emp (name, status, age) values (:name, :status, :age)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	name : payload.employeeName,
+	status : payload.employeeStatus,
+	age : payload.employeeAge
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Set Response" doc:id="50dbd5a3-6eb8-4b8c-9198-0ea355b4c6c4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: 200,
+	message: "Success"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
